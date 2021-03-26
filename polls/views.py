@@ -1,7 +1,8 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect,HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views import generic
+from django.utils import timezone
 
 from .models import Choice, Question
 
@@ -41,3 +42,28 @@ def vote(request, question_id):
         # with POST data. This prevents data from being posted twice if a
         # user hits the Back button.
         return HttpResponseRedirect(reverse('polls:results', args=(question.id,)))
+
+def addnew(request):
+    return render(request, 'polls/addnew.html')
+
+def addNewQuestion(request):
+    questionText = request.POST.get('question_text')
+    choice1Text = request.POST.get('choice1')
+    choice2Text = request.POST.get('choice2')
+    choice3Text = request.POST.get('choice3')
+
+    if questionText != "" and choice1Text != "":
+        q = Question(question_text=questionText, pub_date=timezone.now())
+        q.save()
+        q.choice_set.create(choice_text=choice1Text, votes=0)
+        if choice2Text != "":
+            q.choice_set.create(choice_text=choice2Text, votes=0)
+        if choice3Text != "":
+            q.choice_set.create(choice_text=choice3Text, votes=0)
+
+    return index(request)
+
+def index(request):
+    latest_question_list = Question.objects.order_by('-pub_date')[:5]
+    context = {'latest_question_list': latest_question_list}
+    return render(request, 'polls/index.html', context)
